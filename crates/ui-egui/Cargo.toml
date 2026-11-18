@@ -24,7 +24,7 @@ effectcraft-engine = { workspace = true }
 effectcraft-gpu = { workspace = true }
 egui = { workspace = true }
 egui_extras = { workspace = true }
-eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "clipboard"] }
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "clipboard"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
@@ -41,6 +41,11 @@ bytemuck = { workspace = true }
 # Floating panels open in OS windows of their own on desktop; the web keeps them in the page. Android
 # compiles like the desktop and embeds viewports at run time (`set_embed_viewports(true)`).
 craft-ui = { workspace = true, features = ["native-windows"] }
+
+# eframe's `accesskit` feature is not available with Android's `android-native-activity` (it is a
+# compile_error!), so it is enabled everywhere except Android.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+eframe = { workspace = true, features = ["accesskit"] }
 
 # The in-app updater is desktop only (build.rs sets `ec_no_updater` on wasm32 and Android).
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
