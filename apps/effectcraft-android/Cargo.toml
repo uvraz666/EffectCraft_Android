@@ -1,0 +1,38 @@
+[package]
+name = "effectcraft-android"
+description = "EffectCraft for Android: the desktop egui interface, unchanged, hosted in a NativeActivity"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# Not `workspace = true`: the workspace forbids `unsafe`, and the JNI glue (picker.rs) and the
+# process environment set-up (lib.rs) need a few small `unsafe` blocks. This crate is the one
+# exception, documented in docs/android.md; every other crate keeps the workspace lints.
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+
+# Loaded by android/ (MainActivity extends NativeActivity, android.app.lib_name = effectcraft_android).
+# On every other target the library is empty (see lib.rs), so `cargo build --workspace` is unaffected.
+[lib]
+name = "effectcraft_android"
+crate-type = ["cdylib"]
+
+[target.'cfg(target_os = "android")'.dependencies]
+effectcraft-engine = { workspace = true }
+effectcraft-host = { workspace = true }
+effectcraft-ui-egui = { workspace = true }
+egui = { workspace = true }
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "android-native-activity"] }
+# The same winit eframe runs on; only for AndroidApp and the activity glue.
+winit = { version = "0.30", default-features = false, features = ["android-native-activity"] }
+cpal = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+android_logger = "0.15"
+jni = "0.21"

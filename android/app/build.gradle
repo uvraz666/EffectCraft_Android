@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ai.storyteller.effectcraft'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ai.storyteller.effectcraft'
+        minSdk 29        // Vulkan 1.1 and scoped storage everywhere; the document picker needs nothing older
+        targetSdk 35
+        versionCode 2401
+        versionName '0.24.1'
+        ndk { abiFilters 'arm64-v8a' }   // the engine is built for 64-bit ARM phones
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Sideload-ready; use your own keystore for the Play Store.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    sourceSets {
+        main {
+            // tools/build-android.sh (cargo-ndk) puts libeffectcraft_android.so here.
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs { useLegacyPackaging = false }
+    }
+}

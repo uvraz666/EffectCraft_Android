@@ -1,0 +1,18 @@
+*~
+plan/
+target/
+/dist
+/log
+.DS_Store
+.claude/worktrees/
+__pycache__/
+
+# After Effects test corpus fetched by `cargo xtask aep-corpus`
+/corpus/
+
+# Android
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/app/src/main/jniLibs/
+/android/local.properties
