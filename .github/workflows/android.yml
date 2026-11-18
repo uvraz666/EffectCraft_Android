@@ -29,7 +29,7 @@ jobs:
           gradle-version: '8.9'
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: tools/build-android.sh release
+        run: bash tools/build-android.sh release
       - uses: actions/upload-artifact@v4
         with:
           name: effectcraft-android-apk
