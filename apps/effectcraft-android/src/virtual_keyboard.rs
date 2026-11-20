@@ -661,7 +661,7 @@ impl VirtualKeyboard {
         };
         self.bubble_pos = pos2(x, self.bubble_pos.y.clamp(top, bottom));
         let dock = self.dock;
-        let area = egui::Area::new(Id::new(BUBBLE_ID)).order(Order::Foreground).fixed_pos(self.bubble_pos).show(ctx, |ui| {
+        let area = egui::Area::new(Id::unique(BUBBLE_ID)).order(Order::Foreground).fixed_pos(self.bubble_pos).show(ctx, |ui| {
             let (rect, resp) = ui.allocate_exact_size(vec2(d, d), Sense::click_and_drag());
             paint_bubble(ui, rect, &resp, dock, s);
             resp
@@ -725,7 +725,7 @@ impl VirtualKeyboard {
         // The body scrolls when the screen is too short for it; the header never does.
         let body_max = (vp.height() - 2.0 * MARGIN - 2.0 * pad - 2.0 - 29.0 * s - 6.0 * s).max(60.0);
         let mut minimize = false;
-        let area = egui::Area::new(Id::new(PANEL_ID)).order(Order::Foreground).fixed_pos(self.panel_pos).show(ctx, |ui| {
+        let area = egui::Area::new(Id::unique(PANEL_ID)).order(Order::Foreground).fixed_pos(self.panel_pos).show(ctx, |ui| {
             ui.set_opacity(self.opacity_pct / 100.0);
             egui::Frame::new()
                 .fill(PANEL)
@@ -766,7 +766,7 @@ impl VirtualKeyboard {
         let (close, mini, expand) = (button(0), button(1), button(2));
         // Only the part left of the buttons drags the panel, so the buttons stay their own targets.
         let grab = Rect::from_min_max(bar.min, pos2(expand.min.x - gap, bar.max.y));
-        let drag = ui.interact(grab, ui.id().with("header-drag"), Sense::click_and_drag());
+        let drag = ui.interact(grab, ui.scope_id().with("header-drag"), Sense::click_and_drag());
         if drag.dragged() {
             self.panel_pos = clamp_pos(self.panel_pos + drag.drag_delta(), self.panel_size, vp);
             self.anchored = false;
@@ -790,7 +790,7 @@ impl VirtualKeyboard {
             p.galley(pill.min + vec2(6.0 * s, 3.0 * s), galley, PILL_TEXT);
         }
 
-        let id = ui.id().with("header");
+        let id = ui.scope_id().with("header");
         if icon_button(ui, expand, id.with("expand"), if full { Icon::Shrink } else { Icon::Expand }, s) {
             let mode = if full { Mode::Compact } else { Mode::Full };
             self.tap(ui.ctx(), Act::Switch(mode));
@@ -1039,7 +1039,7 @@ impl VirtualKeyboard {
         let mut right = row.max.x;
         for (i, (k, bw)) in buttons.iter().zip(&widths).enumerate() {
             let rect = Rect::from_min_size(pos2(right - bw, row.min.y), vec2(*bw, row.height()));
-            let id = ui.id().with(("bottom", i));
+            let id = ui.scope_id().with(("bottom", i));
             self.key(ui, rect, id, k);
             right = rect.min.x - gap;
         }
@@ -1066,7 +1066,7 @@ impl VirtualKeyboard {
         for (i, k) in keys.iter().enumerate() {
             let rect = Rect::from_min_size(pos2(x, row.min.y), vec2(k.w * unit, h));
             x += k.w * unit + gap;
-            let id = ui.id().with((salt, i));
+            let id = ui.scope_id().with((salt, i));
             self.key(ui, rect, id, k);
         }
     }
@@ -1074,7 +1074,7 @@ impl VirtualKeyboard {
     fn key_grid(&mut self, ui: &mut Ui, area: Rect, cols: usize, rows: usize, gap: f32, items: &[Item], salt: u32) {
         for (i, (col, row, cs, rs, k)) in items.iter().enumerate() {
             let rect = cell(area, cols, rows, gap, (*col, *row), (*cs, *rs));
-            let id = ui.id().with((salt, i));
+            let id = ui.scope_id().with((salt, i));
             self.key(ui, rect, id, k);
         }
     }
@@ -1183,7 +1183,9 @@ fn icon_button(ui: &Ui, rect: Rect, id: Id, icon: Icon, s: f32) -> bool {
     p.rect_stroke(rect, 7.0 * s, Stroke::new(1.0, ICON_BORDER), StrokeKind::Inside);
     let c = rect.center();
     let stroke = Stroke::new(1.5, ICON_FG);
-    let line = |a: (f32, f32), b: (f32, f32)| p.line_segment([c + vec2(a.0, a.1) * s, c + vec2(b.0, b.1) * s], stroke);
+    let line = |a: (f32, f32), b: (f32, f32)| {
+        p.line_segment([c + vec2(a.0, a.1) * s, c + vec2(b.0, b.1) * s], stroke);
+    };
     match icon {
         Icon::Minimize => line((-5.0, 0.0), (5.0, 0.0)),
         Icon::Close => {
