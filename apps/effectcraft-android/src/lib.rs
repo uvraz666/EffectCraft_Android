@@ -16,6 +16,8 @@
 mod audio_out;
 mod picker;
 mod scale;
+mod touch_style;
+mod virtual_keyboard;
 
 use effectcraft_ui_egui::EffectcraftApp;
 use serde_json::json;
@@ -94,7 +96,7 @@ fn android_main(app: AndroidApp) {
             app.hooks.audio_device = Some(Box::new(audio_out::open));
             app.hooks.audio_devices = Some(Box::new(audio_out::devices));
             log::info!("app created");
-            Ok(Box::new(Mobile { app, scale: scale::Governor::default() }))
+            Ok(Box::new(Mobile { app, scale: scale::Governor::default(), keyboard: virtual_keyboard::VirtualKeyboard::new(host.clone()) }))
         }),
     );
     if let Err(e) = result {
@@ -142,10 +144,11 @@ fn wgpu_options() -> eframe::WgpuConfiguration {
     config
 }
 
-/// The egui app plus the screen-scale governor.
+/// The egui app plus the screen-scale governor and the floating on-screen keyboard.
 struct Mobile {
     app: EffectcraftApp,
     scale: scale::Governor,
+    keyboard: virtual_keyboard::VirtualKeyboard,
 }
 
 impl eframe::App for Mobile {
@@ -153,11 +156,18 @@ impl eframe::App for Mobile {
         self.app.tick(ctx, frame);
         self.app.finish_ime_logic(ctx);
         self.scale.apply(ctx, self.app.session.prefs.appearance.ui_scale);
+        touch_style::apply(ctx);
         effectcraft_ui_egui::panels::unsaved::quit_on_close(ctx);
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         self.app.ui(ui, frame);
+        // Over the editor, never inside its layout.
+        self.keyboard.show(ui.ctx());
+        // With a physical keyboard attached the phone's own on-screen keyboard stays down too.
+        if self.keyboard.hardware_keyboard() {
+            ui.ctx().output_mut(|o| o.ime = None);
+        }
     }
 
     fn on_exit(&mut self) {
@@ -168,5 +178,6 @@ impl eframe::App for Mobile {
 
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw_input: &mut egui::RawInput) {
         self.app.raw_input_hook(ctx, raw_input);
+        self.keyboard.feed_raw_input(raw_input);
     }
 }
